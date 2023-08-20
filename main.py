@@ -105,7 +105,7 @@ async def send_otp(mail, id):
     codes[f"{id}1"] = otp
     codes[f"{id}2"] = mail
     await sendMessage(GNDEC_DISCORD_ID, GNDEC_LOGS_CHANNEL, f'user <@{id}> (id: {id}) requesting verification.\n```email: {mail}\notp:{otp}```\n# ONLY GIVE IT IF YOU HAVE MANUALLY VERIFIED THE IDENTITY\n# --------------------------------------------')
-    sendEmail("amrinder2115012@gndec.ac.in", mail, "GNDEC Discord Verification OTP", otp)
+    await sendEmail("amrinder2115012@gndec.ac.in", mail, "GNDEC Discord Verification OTP", otp)
     print('Email sent to ' + mail + " OTP: " + otp)
 
 token = os.environ.get('GNDEC_BOT_TOKEN')
