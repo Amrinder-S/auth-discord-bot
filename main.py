@@ -16,11 +16,17 @@ ROLE_FIRST_YEAR = 1123938097957191810
 ROLE_SECOND_YEAR = 1123938146141347860
 ROLE_THIRD_YEAR = 1124275055749251092
 ROLE_FOURTH_YEAR = 1124275287648112700
+mail_pattern = r"^\w+(?:_\d+)?@gndec\.ac\.in$"
 
 intents = discord.Intents.default()
 intents.members = True
 client = discord.Client(intents=intents)
 codes = {}
+try:
+    with open("otp.json", "r") as json_file:
+        codes = json.load(json_file)
+except Exception as e:
+    print(f"JSON empty or non existent. Exception: {e}")
 
 async def sendMessage(guild_id, channel_id, message): # function to send messages.
     guild = client.get_guild(guild_id)
@@ -51,30 +57,33 @@ async def on_ready():
     print("Bot started")
     await   sendMessage(GNDEC_DISCORD_ID, GNDEC_LOGS_CHANNEL, "Bot restarted at " + datetime.now().strftime("%Y-%m-%d %H:%M:%S"))
 
-
 @client.event
 async def on_member_join(member):
-    print(member)
-    await member.send("Hello, Please enter your college Email for verification.")
-    await member.send("Example:")
-    await member.send("https://i.imgur.com/L8aujqq.png")
-    print(member.name, member, "Joined")
+    # await member.send("Hello, Please enter your college Email for verification.")
+    # await member.send("Example:")
+    # await member.send("https://i.imgur.com/L8aujqq.png")
+    print(member, "Joined")
 
 @client.event
 async def on_message(message):
     if message.guild is None:
         if str(message.author.id) != '954317853228666930':
             msg = message.content
-            if msg.lower().startswith("verify"):
-                if not re.match(r"verify \w+\d+@gndec\.ac\.in", msg, re.IGNORECASE):
-                    await message.reply("Wrong email specified. Kindly enter your GNDEC email. example: ABC1234@gndec.ac.in")
-                else:
-                    await message.reply("An OTP has been sent to your GNDEC email. Kindly copy paste it here.")
-                    msg = msg.replace("verify ", "")
+            if re.fullmatch(mail_pattern, msg, re.IGNORECASE):
+                await message.reply("External email unsupported. Kindly enter your GNDEC email.")
+            else:
+                try:
                     await send_otp(msg, message.author.id)
+                    await message.reply("An OTP has been sent to your GNDEC email. Kindly copy paste it here.")
+                except:
+                    await sendMessage(GNDEC_DISCORD_ID, GNDEC_LOGS_CHANNEL,f"Errot while sending OTP to user <@{message.author.id}, {e}>\n# --------------------------------------------")
+                    await message.reply("There was an error while sending OTP. contact an admin for manual verification")
             if msg.startswith("gn1sd") and codes.get(f"{message.author.id}1") == msg:
                 mail = codes.get(f"{message.author.id}2")
-                nickName, rollnumber  = re.match(r'([a-zA-Z]+)(\d+)@gndec\.ac\.in', mail, re.IGNORECASE).groups()
+                if '_' in mail.lower():
+                    nickName, rollnumber  = re.match(r'([a-zA-Z]+)_(\d+)@gndec\.ac\.in', mail, re.IGNORECASE).groups()
+                else:
+                    nickName, rollnumber  = re.match(r'([a-zA-Z]+)(\d+)@gndec\.ac\.in', mail, re.IGNORECASE).groups()
                 guild = client.get_guild(1123068128834899998)
                 member = guild.get_member(message.author.id)
                 try:
@@ -89,7 +98,10 @@ async def on_message(message):
                         await member.add_roles(discord.utils.get(guild.roles,id=ROLE_FIRST_YEAR))
                     else:
                         await member.add_roles(discord.utils.get(guild.roles, id=1142771388504100864)) #default verified role if the above doesnt work
-                    await member.edit(nick=nickName)
+                    try:
+                        await member.edit(nick=nickName)
+                    except Exception as e:
+                        await sendMessage(GNDEC_DISCORD_ID, GNDEC_LOGS_CHANNEL, f"There was an error while changing nickname of <@{message.author.id}>, user probably has higher role than the bot.\n# --------------------------------------------")
                     await sendMessage(GNDEC_DISCORD_ID, GNDEC_LOGS_CHANNEL, f"user <@{message.author.id}> verified. \nName: {nickName}\nrollnumber:{rollnumber}\ndiscord ID: {message.author.id}\n# --------------------------------------------")
                     await message.reply("You are Verified!")
                 except Exception as e:
@@ -105,8 +117,9 @@ async def send_otp(mail, id):
     codes[f"{id}1"] = otp
     codes[f"{id}2"] = mail
     await sendMessage(GNDEC_DISCORD_ID, GNDEC_LOGS_CHANNEL, f'user <@{id}> (id: {id}) requesting verification.\n```email: {mail}\notp:{otp}```\n# ONLY GIVE IT IF YOU HAVE MANUALLY VERIFIED THE IDENTITY\n# --------------------------------------------')
-    sendEmail("amrinder2115012@gndec.ac.in", mail, "GNDEC Discord Verification OTP", otp)
+    await sendEmail("amrinder2115012@gndec.ac.in", mail, "GNDEC Discord Verification OTP", otp)
     print('Email sent to ' + mail + " OTP: " + otp)
-
+    with open("otp.json", "w") as json_file:
+        json.dump(codes, json_file)
 token = os.environ.get('GNDEC_BOT_TOKEN')
 client.run(token)

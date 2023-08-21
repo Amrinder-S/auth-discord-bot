@@ -1,6 +1,0 @@
-discord.py
-json
-random2
-regex
-ssl
-smtplib
