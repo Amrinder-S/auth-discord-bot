@@ -11,15 +11,7 @@ setx SENDGRID_PASSWORD THIS_IS_SENDGRIND_PASSWORD
 tip: NEVER PUSH HARDCODED PASSWORDS OR TOKENS THROUGH GITHUB.
 
 - install python.
-- now clone the repository using the command (learn how to use git from youtube)
-```
-git clone https://github.com/Amrinder-S/gndec-discord-bot/
-```
-- install the requirements. Cd into the folder and type 
-```
-pip install -r requirements.txt
-```
-
+- now clone the repository
 - To run the bot type
 ```
 python main.py
