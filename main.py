@@ -69,7 +69,7 @@ async def on_message(message):
     if message.guild is None:
         if str(message.author.id) != '954317853228666930':
             msg = message.content
-            if re.fullmatch(mail_pattern, msg, re.IGNORECASE):
+            if not re.fullmatch(mail_pattern, msg, re.IGNORECASE):
                 await message.reply("External email unsupported. Kindly enter your GNDEC email.")
             else:
                 try:
