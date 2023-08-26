@@ -24,14 +24,14 @@ async def syncRoles():
     for student in students:
         guild = client.get_guild(GNDEC_DISCORD_ID)
         member = guild.get_member(student.id)
-        print(student.id, student.name, student.batch, student.roll_number)
-        if(student.batch == 20):
+        print(student.)
+        if(student.batch == "20"):
             await member.add_roles(discord.utils.get(guild.roles,id=ROLE_FOURTH_YEAR))
-        elif(student.batch == 21):
+        elif(student.batch == "21"):
             await member.add_roles(discord.utils.get(guild.roles,id=ROLE_THIRD_YEAR))
-        elif(student.batch == 22):
+        elif(student.batch == "22"):
             await member.add_roles(discord.utils.get(guild.roles,id=ROLE_SECOND_YEAR))
-        elif(student.batch == 23):
+        elif(student.batch == "23"):
             await member.add_roles(discord.utils.get(guild.roles,id=ROLE_FIRST_YEAR))
         else:
             await member.add_roles(discord.utils.get(guild.roles, id=1142771388504100864)) #default verified role if the above doesnt work
