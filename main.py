@@ -25,23 +25,12 @@ intents = discord.Intents.default()
 intents.members = True
 client = discord.Client(intents=intents)
 
-
-#------------------- synchronizing otp's.
-codes = {}
-try:
-    with open("otp.json", "r") as json_file:
-        codes = json.load(json_file)
-except Exception as e:
-    print(f"JSON empty or non existent. Exception: {e}")
-
-
 #------------------- Slash Commands go here.
 tree = app_commands.CommandTree(client)
 @tree.command(name = "syncroles", description = "used to synchronize all roles again.",guild=discord.Object(id=GNDEC_DISCORD_ID))
 async def syncRolesCommand(interaction):
     await interaction.response.send_message("Syncing.", ephemeral=True)
     await interaction.followup.send(str(await syncRoles()), ephemeral=True)
-
 
 
 #------------------- Client events (on member join, on ready, on message etc.)
@@ -62,17 +51,18 @@ async def on_message(message):
     if message.guild is None:
         if str(message.author.id) != '954317853228666930':
             msg = message.content
-            if not re.fullmatch(mail_pattern, msg, re.IGNORECASE):
-                await message.reply("External email unsupported. Kindly enter your GNDEC email.")
-            else:
-                try:
-                    await send_otp(msg, message.author.id)
-                    await message.reply("An OTP has been sent to your GNDEC email. Kindly copy paste it here.")
-                except:
-                    await sendMessage(GNDEC_DISCORD_ID, GNDEC_LOGS_CHANNEL,f"Errot while sending OTP to user <@{message.author.id}, {e}>\n# --------------------------------------------")
-                    await message.reply("There was an error while sending OTP. contact an admin for manual verification")
-            if msg.startswith("gn1sd") and codes.get(f"{message.author.id}1") == msg:
-                mail = codes.get(f"{message.author.id}2")
+            if '@' in msg:
+                if not re.fullmatch(mail_pattern, msg, re.IGNORECASE):
+                    await message.reply("External email unsupported. Kindly enter your GNDEC email.")
+                else:
+                    try:
+                        await send_otp(msg, message.author.id)
+                    except:
+                        await sendMessage(GNDEC_DISCORD_ID, GNDEC_LOGS_CHANNEL,f"Errot while sending OTP to user <@{message.author.id}, {e}>\n# --------------------------------------------")
+                        await message.reply("There was an error while sending OTP. contact an admin for manual verification")
+            
+            if msg.startswith("gn1sd") and mydb.checkOtp(message.author.id, msg):
+                mail = mydb.getEmailForOtp(message.author.id)
                 if '_' in mail.lower():
                     nickName, rollnumber  = re.match(r'([a-zA-Z]+)_(\d+)@gndec\.ac\.in', mail, re.IGNORECASE).groups()
                 else:
@@ -94,10 +84,10 @@ async def on_message(message):
                     try:
                         await member.edit(nick=nickName)
                     except Exception as e:
-                        await sendMessage(GNDEC_DISCORD_ID, GNDEC_LOGS_CHANNEL, f"There was an error while changing nickname of <@{message.author.id}>, user probably has higher role than the bot.\n# --------------------------------------------")
+                        await sendMessage(GNDEC_DISCORD_ID, GNDEC_LOGS_CHANNEL, f"There was an error while changing nickname of {message.author.name}, user probably has higher role than the bot.\n# --------------------------------------------")
                     await sendMessage(GNDEC_DISCORD_ID, GNDEC_LOGS_CHANNEL, f"user <@{message.author.id}> verified. \nName: {nickName}\nrollnumber:{rollnumber}\ndiscord ID: {message.author.id}\n# --------------------------------------------")
                     mydb.addStudent(message.author.id, nickName, year, rollnumber)
-
+                    mydb.removeOtp(message.author.id)
                     await message.reply("You are Verified!")
                 except Exception as e:
                     print(f"Error during verification: {e}")
@@ -111,14 +101,18 @@ async def send_otp(mail, id):
     letters = ["a", "b", "c", "d", "e", "f", "g", "h", "i", "j", "k", "m", "n", "o", "p", "q", "r", "s", "t", "u", "v", "w", "y", "z"]
     numbers = [1, 2, 3, 4, 5, 6, 7, 8, 9, 0, 10, 11, 12, 12, 13, 14, 15, 16, 17, 18, 19]
     otp = f"gn1sd{random.choice(letters)}{random.choice(letters)}{random.choice(numbers)}{random.choice(letters)}{random.choice(letters)}"
-    codes[f"{id}1"] = otp
-    codes[f"{id}2"] = mail
-    await sendMessage(GNDEC_DISCORD_ID, GNDEC_LOGS_CHANNEL, f'user <@{id}> (id: {id}) requesting verification.\n```email: {mail}\notp:{otp}```\n# ONLY GIVE IT IF YOU HAVE MANUALLY VERIFIED THE IDENTITY\n# --------------------------------------------')
-    # await sendEmail("amrinder2115012@gndec.ac.in", mail, "GNDEC Discord Verification OTP", otp)
-    # todo: re enable it after testing is complete.
-    print('Email sent to ' + mail + " OTP: " + otp)
-    with open("otp.json", "w") as json_file:
-        json.dump(codes, json_file)
+    guild = client.get_guild(GNDEC_DISCORD_ID)
+    member = guild.get_member(id)
+    if not mydb.getStudent(id):
+        if not mydb.checkOtpByEmail(mail) and not mydb.checkOtpByUser(id): #checking by email to avoid sending multiple emails. checking by id to avoid single user sending multiple verification requests from multiple emails.
+            mydb.addOtp(id, mail, otp)
+            await member.send("An OTP has been sent to your GNDEC email. Kindly copy paste it here.")
+            await sendMessage(GNDEC_DISCORD_ID, GNDEC_LOGS_CHANNEL, f'user <@{id}> (id: {id}) requesting verification.\n```email: {mail}\notp:{otp}```\n# ONLY GIVE IT IF YOU HAVE MANUALLY VERIFIED THE IDENTITY\n# --------------------------------------------')
+            # await sendEmail("amrinder2115012@gndec.ac.in", mail, "GNDEC Discord Verification OTP", otp) # todo
+        else:
+            await member.send("Wait atleast 5 minutes for email to arrive.\nOtherwise message a moderator if it doesn't arrive after 5 minutes.")
+    else:
+        await member.send(f"You are already verified with roll number: {mydb.getStudent(id).roll_number}")
 
 async def syncRoles():
     students = mydb.getAll()
@@ -142,6 +136,7 @@ async def syncRoles():
         else:
             print(f"[Warning] unable to change nickname of {student.name}, user probably has higher role than the bot. id: <@{student.id}>\n# --------------------------------------------")
     return f"Synced {syncedCount} members successfully!"
+
 async def sendMessage(guild_id, channel_id, message): # function to send messages.
     guild = client.get_guild(guild_id)
     joinCh = discord.utils.get(guild.text_channels, id=channel_id)

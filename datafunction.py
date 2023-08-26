@@ -5,6 +5,7 @@ from sqlalchemy.pool import QueuePool
 from datetime import datetime
 
 engine = create_engine("sqlite:///file.db", poolclass=QueuePool)
+connection = engine.connect()
 Session = sessionmaker(bind=engine)
 Base = declarative_base()
 class User(Base):
@@ -14,52 +15,72 @@ class User(Base):
     batch = Column(Integer)
     roll_number = Column(Integer)
     time_stamp = Column(DateTime)
-    
-Base.metadata.create_all(engine)
-session = Session()
-
-# user1 = User(id='5675', name='fada', year=1212, discord_id=1123068928834899933, roll_number='2115044')
-# session.add(user1)
-# session.commit()
-# users = session.query(User).all()
-def addStudent(id, name, batch, roll_number):
-    time_stamp = datetime.now()
-    user1 = User(id=id, name=name, batch=batch, roll_number=roll_number, time_stamp=time_stamp)
-    session.add(user1)
-    session.commit()
-
-def removeStudent(id):
-    result = engine.execute(f"DELETE FROM students WHERE id={id}")
-
-def getStudent(id):
-    result = engine.execute(f"SELECT * FROM students where id={id}")
-    for row in result:
-        return row
-
-def getAll():
-    all_items = session.query(User).all()
-    return all_items
-
 class Otp(Base):
     __tablename__ = 'otp'
     id = Column(Integer, primary_key = True)
     email = Column(String)
     otp = Column(String)
+Base.metadata.create_all(engine)
+session = Session()
+
+def addStudent(id, name, batch, roll_number):
+    time_stamp = datetime.now()
+    s = User(id=id, name=name, batch=batch, roll_number=roll_number, time_stamp=time_stamp)
+    if s:
+        session.add(s)
+        session.commit()
+
+def removeStudent(id):
+    s = session.query(User).filter_by(id=id).first()
+    if s:
+        session.delete(s)
+        session.commit()
+
+
+def getStudent(id):
+    s = session.query(User).filter_by(id=id).first()
+    if s:
+        return s
+
+
+def getAll():
+    all_items = session.query(User).all()
+    return all_items
+
 
 def addOtp(id, email, otp):
-    otp = Otp(id = id, email = email, otp = otp)
-    session.add(Otp)
-    session.commit()
+    s = Otp(id=id, email=email, otp=otp)  # Create an instance of the Otp class
+    if s:
+        session.add(s)  # Add the instance to the session
+        session.commit()
 
 def removeOtp(id):
-    result = engine.execute(f"DELETE FROM otp WHERE id={id}")
+    s = session.query(Otp).filter_by(id=id).first()
+    if s:
+        session.delete(s)
+        session.commit()
 
-def checkOtp(email):
-    result = engine.execute(f"SELECT * FROM otp WHERE email={email}")
-    for row in result:
-        return row
+def checkOtp(id, msg):
+    s = session.query(Otp).filter_by(id=id).first()
+    if s:
+        if s.otp == msg:
+            return True
+    return False
 
-def getEmail(id):
-    result = engine.execute(f"SELECT * FROM otp WHERE id={id}")
-    for row in result:
-        return row
+def checkOtpByEmail(mail):
+    s = session.query(Otp).filter_by(email=mail).first()
+    if s:
+        return True
+    return False
+
+def checkOtpByUser(id):
+    s = session.query(Otp).filter_by(id=id).first()
+    if s:
+        return True
+    return False
+
+def getEmailForOtp(id):
+    s = session.query(Otp).filter_by(id=id).first()
+    if s:
+        return s.email
+    return False
