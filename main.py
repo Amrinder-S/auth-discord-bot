@@ -8,6 +8,7 @@ import smtplib
 from datetime import datetime
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
+import datafunction as mydb
 
 #global variables
 GNDEC_DISCORD_ID = 1123068128834899998
@@ -17,7 +18,27 @@ ROLE_SECOND_YEAR = 1123938146141347860
 ROLE_THIRD_YEAR = 1124275055749251092
 ROLE_FOURTH_YEAR = 1124275287648112700
 mail_pattern = r"^\w+(?:_\d+)?@gndec\.ac\.in$"
-
+# info : you have to check if the -person is in the server first
+async def syncRoles():
+    students = mydb.getAll()
+    for student in students:
+        guild = client.get_guild(GNDEC_DISCORD_ID)
+        member = guild.get_member(student.id)
+        print(student.id, student.name, student.batch, student.roll_number)
+        if(student.batch == 20):
+            await member.add_roles(discord.utils.get(guild.roles,id=ROLE_FOURTH_YEAR))
+        elif(student.batch == 21):
+            await member.add_roles(discord.utils.get(guild.roles,id=ROLE_THIRD_YEAR))
+        elif(student.batch == 22):
+            await member.add_roles(discord.utils.get(guild.roles,id=ROLE_SECOND_YEAR))
+        elif(student.batch == 23):
+            await member.add_roles(discord.utils.get(guild.roles,id=ROLE_FIRST_YEAR))
+        else:
+            await member.add_roles(discord.utils.get(guild.roles, id=1142771388504100864)) #default verified role if the above doesnt work
+        try:
+            await member.edit(nick=student.name)
+        except Exception as e:
+            await sendMessage(GNDEC_DISCORD_ID, GNDEC_LOGS_CHANNEL, f"There was an error while changing nickname of <@{student.id}>, user probably has higher role than the bot.\n# --------------------------------------------")
 intents = discord.Intents.default()
 intents.members = True
 client = discord.Client(intents=intents)
@@ -56,6 +77,7 @@ async def on_ready():
     await client.change_presence(activity=discord.Game("."))
     print("Bot started")
     await   sendMessage(GNDEC_DISCORD_ID, GNDEC_LOGS_CHANNEL, "Bot restarted at " + datetime.now().strftime("%Y-%m-%d %H:%M:%S"))
+    await syncRoles()
 
 @client.event
 async def on_member_join(member):
@@ -103,6 +125,8 @@ async def on_message(message):
                     except Exception as e:
                         await sendMessage(GNDEC_DISCORD_ID, GNDEC_LOGS_CHANNEL, f"There was an error while changing nickname of <@{message.author.id}>, user probably has higher role than the bot.\n# --------------------------------------------")
                     await sendMessage(GNDEC_DISCORD_ID, GNDEC_LOGS_CHANNEL, f"user <@{message.author.id}> verified. \nName: {nickName}\nrollnumber:{rollnumber}\ndiscord ID: {message.author.id}\n# --------------------------------------------")
+                    mydb.addStudent(message.author.id, nickName, year, rollnumber, None)
+
                     await message.reply("You are Verified!")
                 except Exception as e:
                     print(f"Error during verification: {e}")
@@ -117,9 +141,12 @@ async def send_otp(mail, id):
     codes[f"{id}1"] = otp
     codes[f"{id}2"] = mail
     await sendMessage(GNDEC_DISCORD_ID, GNDEC_LOGS_CHANNEL, f'user <@{id}> (id: {id}) requesting verification.\n```email: {mail}\notp:{otp}```\n# ONLY GIVE IT IF YOU HAVE MANUALLY VERIFIED THE IDENTITY\n# --------------------------------------------')
-    await sendEmail("amrinder2115012@gndec.ac.in", mail, "GNDEC Discord Verification OTP", otp)
+    # await sendEmail("amrinder2115012@gndec.ac.in", mail, "GNDEC Discord Verification OTP", otp)
     print('Email sent to ' + mail + " OTP: " + otp)
     with open("otp.json", "w") as json_file:
         json.dump(codes, json_file)
 token = os.environ.get('GNDEC_BOT_TOKEN')
 client.run(token)
+
+
+
