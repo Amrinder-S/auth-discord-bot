@@ -9,6 +9,7 @@ from datetime import datetime
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
 import datafunction as mydb
+from discord import app_commands
 
 #global variables
 GNDEC_DISCORD_ID = 1123068128834899998
@@ -19,29 +20,16 @@ ROLE_THIRD_YEAR = 1124275055749251092
 ROLE_FOURTH_YEAR = 1124275287648112700
 mail_pattern = r"^\w+(?:_\d+)?@gndec\.ac\.in$"
 # info : you have to check if the -person is in the server first
-async def syncRoles():
-    students = mydb.getAll()
-    for student in students:
-        guild = client.get_guild(GNDEC_DISCORD_ID)
-        member = guild.get_member(student.id)
-        print(student.)
-        if(student.batch == "20"):
-            await member.add_roles(discord.utils.get(guild.roles,id=ROLE_FOURTH_YEAR))
-        elif(student.batch == "21"):
-            await member.add_roles(discord.utils.get(guild.roles,id=ROLE_THIRD_YEAR))
-        elif(student.batch == "22"):
-            await member.add_roles(discord.utils.get(guild.roles,id=ROLE_SECOND_YEAR))
-        elif(student.batch == "23"):
-            await member.add_roles(discord.utils.get(guild.roles,id=ROLE_FIRST_YEAR))
-        else:
-            await member.add_roles(discord.utils.get(guild.roles, id=1142771388504100864)) #default verified role if the above doesnt work
-        try:
-            await member.edit(nick=student.name)
-        except Exception as e:
-            await sendMessage(GNDEC_DISCORD_ID, GNDEC_LOGS_CHANNEL, f"There was an error while changing nickname of <@{student.id}>, user probably has higher role than the bot.\n# --------------------------------------------")
+
 intents = discord.Intents.default()
 intents.members = True
 client = discord.Client(intents=intents)
+tree = app_commands.CommandTree(client)
+
+@tree.command(name = "syncroles", description = "used to synchronize all roles again.",guild=discord.Object(id=GNDEC_DISCORD_ID))
+async def first_command(interaction):
+    await interaction.response.send_message("Hello!", ephemeral=True)
+
 codes = {}
 try:
     with open("otp.json", "r") as json_file:
@@ -77,7 +65,7 @@ async def on_ready():
     await client.change_presence(activity=discord.Game("."))
     print("Bot started")
     await   sendMessage(GNDEC_DISCORD_ID, GNDEC_LOGS_CHANNEL, "Bot restarted at " + datetime.now().strftime("%Y-%m-%d %H:%M:%S"))
-    await syncRoles()
+    await tree.sync(guild=discord.Object(id=GNDEC_DISCORD_ID))
 
 @client.event
 async def on_member_join(member):
@@ -145,6 +133,27 @@ async def send_otp(mail, id):
     print('Email sent to ' + mail + " OTP: " + otp)
     with open("otp.json", "w") as json_file:
         json.dump(codes, json_file)
+
+async def syncRoles():
+    students = mydb.getAll()
+    for student in students:
+        guild = client.get_guild(GNDEC_DISCORD_ID)
+        member = guild.get_member(student.id)
+        if(student.batch == 20):
+            await member.add_roles(discord.utils.get(guild.roles,id=ROLE_FOURTH_YEAR))
+        elif(student.batch == 21):
+            await member.add_roles(discord.utils.get(guild.roles,id=ROLE_THIRD_YEAR))
+        elif(student.batch == 22):
+            await member.add_roles(discord.utils.get(guild.roles,id=ROLE_SECOND_YEAR))
+        elif(student.batch == 23):
+            await member.add_roles(discord.utils.get(guild.roles,id=ROLE_FIRST_YEAR))
+        else:
+            await member.add_roles(discord.utils.get(guild.roles, id=1142771388504100864)) #default verified role if the above doesnt work
+        if(member.top_role.position < guild.me.top_role.position):
+            await member.edit(nick=str(student.name).capitalize())
+        else:
+            await sendMessage(GNDEC_DISCORD_ID, GNDEC_LOGS_CHANNEL, f"[Warning] unable to change nickname of <@{student.id}>, user probably has higher role than the bot.\n# --------------------------------------------")
+
 token = os.environ.get('GNDEC_BOT_TOKEN')
 client.run(token)
 
