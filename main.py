@@ -10,6 +10,7 @@ from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
 import datafunction as mydb
 from discord import app_commands
+# todo : you have to check if the person is in the server first before setting roles.
 
 #global variables
 GNDEC_DISCORD_ID = 1123068128834899998
@@ -19,17 +20,13 @@ ROLE_SECOND_YEAR = 1123938146141347860
 ROLE_THIRD_YEAR = 1124275055749251092
 ROLE_FOURTH_YEAR = 1124275287648112700
 mail_pattern = r"^\w+(?:_\d+)?@gndec\.ac\.in$"
-# info : you have to check if the -person is in the server first
 
 intents = discord.Intents.default()
 intents.members = True
 client = discord.Client(intents=intents)
-tree = app_commands.CommandTree(client)
 
-@tree.command(name = "syncroles", description = "used to synchronize all roles again.",guild=discord.Object(id=GNDEC_DISCORD_ID))
-async def first_command(interaction):
-    await interaction.response.send_message("Hello!", ephemeral=True)
 
+#------------------- synchronizing otp's.
 codes = {}
 try:
     with open("otp.json", "r") as json_file:
@@ -37,29 +34,17 @@ try:
 except Exception as e:
     print(f"JSON empty or non existent. Exception: {e}")
 
-async def sendMessage(guild_id, channel_id, message): # function to send messages.
-    guild = client.get_guild(guild_id)
-    joinCh = discord.utils.get(guild.text_channels, id=channel_id)
-    await joinCh.send(message)
 
-async def sendEmail(sender_email, receiver_email, subject, message):
-    print("attempting to send email.")
-    sender_password = os.environ.get('SENDGRID_PASSWORD') #sendgrid password (to be stored in enviornment variables. on windows: setx SENDGRID_PASSWORD PASSWORD_GOES_HERE)
-    smtp_server = 'smtp.sendgrid.net'
-    smtp_port = 465
-    try:
-        session = smtplib.SMTP_SSL(smtp_server, smtp_port)
-        session.login("apikey", sender_password)
-        msg = f'From: {sender_email}\r\nTo: {receiver_email}\r\nContent-Type: text/plain; charset="utf-8"\r\nSubject: {subject}\r\n\r\n'
-        msg += message
-        session.sendmail(sender_email, receiver_email, msg.encode('utf8'))
-        session.quit()
-        await sendMessage(GNDEC_DISCORD_ID, GNDEC_LOGS_CHANNEL, f"Email sent to {sender_email}.\nContent: {message}\n# --------------------------------------------")
-    except Exception as e:
-        print(f"Error: {e}")
-        await sendMessage(GNDEC_DISCORD_ID, GNDEC_LOGS_CHANNEL, f"Failed to send Email: {e}\n# --------------------------------------------")
+#------------------- Slash Commands go here.
+tree = app_commands.CommandTree(client)
+@tree.command(name = "syncroles", description = "used to synchronize all roles again.",guild=discord.Object(id=GNDEC_DISCORD_ID))
+async def syncRolesCommand(interaction):
+    await interaction.response.send_message("Syncing.", ephemeral=True)
+    await interaction.followup.send(str(await syncRoles()), ephemeral=True)
 
 
+
+#------------------- Client events (on member join, on ready, on message etc.)
 @client.event
 async def on_ready():
     await client.change_presence(activity=discord.Game("."))
@@ -69,9 +54,7 @@ async def on_ready():
 
 @client.event
 async def on_member_join(member):
-    # await member.send("Hello, Please enter your college Email for verification.")
-    # await member.send("Example:")
-    # await member.send("https://i.imgur.com/L8aujqq.png")
+    # await member.send("Hello, Welcome to GNDEC discord")
     print(member, "Joined")
 
 @client.event
@@ -122,6 +105,8 @@ async def on_message(message):
                     await message.reply("There was an error during verification. Contact moderators for manual verification.")
 
 
+
+#------------------- Functions definitions.
 async def send_otp(mail, id):
     letters = ["a", "b", "c", "d", "e", "f", "g", "h", "i", "j", "k", "m", "n", "o", "p", "q", "r", "s", "t", "u", "v", "w", "y", "z"]
     numbers = [1, 2, 3, 4, 5, 6, 7, 8, 9, 0, 10, 11, 12, 12, 13, 14, 15, 16, 17, 18, 19]
@@ -130,12 +115,14 @@ async def send_otp(mail, id):
     codes[f"{id}2"] = mail
     await sendMessage(GNDEC_DISCORD_ID, GNDEC_LOGS_CHANNEL, f'user <@{id}> (id: {id}) requesting verification.\n```email: {mail}\notp:{otp}```\n# ONLY GIVE IT IF YOU HAVE MANUALLY VERIFIED THE IDENTITY\n# --------------------------------------------')
     # await sendEmail("amrinder2115012@gndec.ac.in", mail, "GNDEC Discord Verification OTP", otp)
+    # todo: re enable it after testing is complete.
     print('Email sent to ' + mail + " OTP: " + otp)
     with open("otp.json", "w") as json_file:
         json.dump(codes, json_file)
 
 async def syncRoles():
     students = mydb.getAll()
+    syncedCount = 0
     for student in students:
         guild = client.get_guild(GNDEC_DISCORD_ID)
         member = guild.get_member(student.id)
@@ -151,9 +138,35 @@ async def syncRoles():
             await member.add_roles(discord.utils.get(guild.roles, id=1142771388504100864)) #default verified role if the above doesnt work
         if(member.top_role.position < guild.me.top_role.position):
             await member.edit(nick=str(student.name).capitalize())
+            syncedCount = syncedCount + 1
         else:
-            await sendMessage(GNDEC_DISCORD_ID, GNDEC_LOGS_CHANNEL, f"[Warning] unable to change nickname of <@{student.id}>, user probably has higher role than the bot.\n# --------------------------------------------")
+            print(f"[Warning] unable to change nickname of {student.name}, user probably has higher role than the bot. id: <@{student.id}>\n# --------------------------------------------")
+    return f"Synced {syncedCount} members successfully!"
+async def sendMessage(guild_id, channel_id, message): # function to send messages.
+    guild = client.get_guild(guild_id)
+    joinCh = discord.utils.get(guild.text_channels, id=channel_id)
+    await joinCh.send(message)
 
+async def sendEmail(sender_email, receiver_email, subject, message):
+    print("attempting to send email.")
+    sender_password = os.environ.get('SENDGRID_PASSWORD') #sendgrid password (to be stored in enviornment variables. on windows: setx SENDGRID_PASSWORD PASSWORD_GOES_HERE)
+    smtp_server = 'smtp.sendgrid.net'
+    smtp_port = 465
+    try:
+        session = smtplib.SMTP_SSL(smtp_server, smtp_port)
+        session.login("apikey", sender_password)
+        msg = f'From: {sender_email}\r\nTo: {receiver_email}\r\nContent-Type: text/plain; charset="utf-8"\r\nSubject: {subject}\r\n\r\n'
+        msg += message
+        session.sendmail(sender_email, receiver_email, msg.encode('utf8'))
+        session.quit()
+        await sendMessage(GNDEC_DISCORD_ID, GNDEC_LOGS_CHANNEL, f"Email sent to {sender_email}.\nContent: {message}\n# --------------------------------------------")
+    except Exception as e:
+        print(f"Error: {e}")
+        await sendMessage(GNDEC_DISCORD_ID, GNDEC_LOGS_CHANNEL, f"Failed to send Email: {e}\n# --------------------------------------------")
+
+
+
+#------------------- running the client.
 token = os.environ.get('GNDEC_BOT_TOKEN')
 client.run(token)
 
