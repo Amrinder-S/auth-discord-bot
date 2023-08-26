@@ -96,7 +96,7 @@ async def on_message(message):
                     except Exception as e:
                         await sendMessage(GNDEC_DISCORD_ID, GNDEC_LOGS_CHANNEL, f"There was an error while changing nickname of <@{message.author.id}>, user probably has higher role than the bot.\n# --------------------------------------------")
                     await sendMessage(GNDEC_DISCORD_ID, GNDEC_LOGS_CHANNEL, f"user <@{message.author.id}> verified. \nName: {nickName}\nrollnumber:{rollnumber}\ndiscord ID: {message.author.id}\n# --------------------------------------------")
-                    mydb.addStudent(message.author.id, nickName, year, rollnumber, None)
+                    mydb.addStudent(message.author.id, nickName, year, rollnumber)
 
                     await message.reply("You are Verified!")
                 except Exception as e:
@@ -167,8 +167,11 @@ async def sendEmail(sender_email, receiver_email, subject, message):
 
 
 #------------------- running the client.
-token = os.environ.get('GNDEC_BOT_TOKEN')
-client.run(token)
+try:
+    token = os.environ.get('GNDEC_BOT_TOKEN')
+    client.run(token)
+except Exception as e:
+    print(f"enviornment variable not set")
 
 
 
