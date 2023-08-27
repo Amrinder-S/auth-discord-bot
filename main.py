@@ -1,13 +1,9 @@
 import discord
-import json
 import random
 import re
 import os
-import ssl
 import smtplib
 from datetime import datetime
-from email.mime.text import MIMEText
-from email.mime.multipart import MIMEMultipart
 import datafunction as mydb
 from discord import app_commands
 # todo : you have to check if the person is in the server first before setting roles.
@@ -158,7 +154,7 @@ async def send_otp(mail, id):
             mydb.addOtp(id, mail, otp)
             await member.send("An OTP has been sent to your GNDEC email. Kindly copy paste it here.")
             await sendMessage(GNDEC_DISCORD_ID, GNDEC_LOGS_CHANNEL, f'user <@{id}> (id: {id}) requesting verification.\n```email: {mail}\notp:{otp}```\n# ONLY GIVE IT IF YOU HAVE MANUALLY VERIFIED THE IDENTITY\n# --------------------------------------------')
-            # await sendEmail("amrinder2115012@gndec.ac.in", mail, "GNDEC Discord Verification OTP", otp) # todo
+            await sendEmail("amrinder2115012@gndec.ac.in", mail, "GNDEC Discord Verification OTP", otp) # todo
         else:
             await member.send("Wait atleast 5 minutes for email to arrive.\nOtherwise message a moderator if it doesn't arrive after 5 minutes.")
     else:
