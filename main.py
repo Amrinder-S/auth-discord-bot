@@ -154,7 +154,7 @@ async def send_otp(mail, id):
             mydb.addOtp(id, mail, otp)
             await member.send("An OTP has been sent to your GNDEC email. Kindly copy paste it here.")
             await sendMessage(GNDEC_DISCORD_ID, GNDEC_LOGS_CHANNEL, f'user <@{id}> (id: {id}) requesting verification.\n```email: {mail}\notp:{otp}```\n# ONLY GIVE IT IF YOU HAVE MANUALLY VERIFIED THE IDENTITY\n# --------------------------------------------')
-            await sendEmail("amrinder2115012@gndec.ac.in", mail, "GNDEC Discord Verification OTP", otp) # todo
+            await sendEmail("aps_phy@gndec.ac.in", mail, "GNDEC Discord Verification OTP", otp) # todo
         else:
             await member.send("Wait atleast 5 minutes for email to arrive.\nOtherwise message a moderator if it doesn't arrive after 5 minutes.")
     else:
