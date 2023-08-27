@@ -32,16 +32,52 @@ async def syncRolesCommand(interaction):
     await interaction.response.send_message("Syncing.", ephemeral=True)
     await interaction.followup.send(str(await syncRoles()), ephemeral=True)
 
-@tree.command(name = "removestudent", description = "used to remove a student",guild=discord.Object(id=GNDEC_DISCORD_ID))
-async def removeStudentCommand(interaction):
-    await interaction.response.send_message("Removing.", ephemeral=True)
-    await interaction.followup.send(str(await removeStudent()), ephemeral=True)
+@tree.command(name = "removestudent", description = "used to remove a student from verifiied status",guild=discord.Object(id=GNDEC_DISCORD_ID))
+async def removeStudentCommand(interaction: discord.Interaction, member: discord.Member):
+    """removes the student from verified status.
+
+    Parameters
+    -----------
+    member: discord.Member
+        the member to remove from verified status
+    """
+    await interaction.response.send_message(f"Removing {member.name}", ephemeral=True)
+    if(mydb.removeStudent(member.id)):
+        await interaction.followup.send(f"Member {member.name} removed.", ephemeral=True)
+    else:
+        await interaction.followup.send(f"Failed to remove member {member.name}.", ephemeral=True)
+        
+@tree.command(name = "removeotp", description = "used to reset a student's otp",guild=discord.Object(id=GNDEC_DISCORD_ID))
+async def removeotp(interaction: discord.Interaction, member: discord.Member):
+    """removes the student from otp status.
+
+    Parameters
+    -----------
+    member: discord.Member
+        the member to reset otp for.
+    """
+    await interaction.response.send_message(f"Removing {member.name}", ephemeral=True)
+    if(mydb.removeOtp(member.id)):
+        await interaction.followup.send(f"Member {member.name} removed.", ephemeral=True)
+    else:
+        await interaction.followup.send(f"Failed to remove member {member.name}.", ephemeral=True)
 
 
-@tree.command(name = "getstudent", description = "used to get details of a student",guild=discord.Object(id=GNDEC_DISCORD_ID))
-async def getStudentCommand(interaction):
-    await interaction.response.send_message("Fetching.", ephemeral=True)
-    await interaction.followup.send(str(await getStudentStudent()), ephemeral=True)
+@tree.command(name = "getstudent", description = "used to get the student's information.",guild=discord.Object(id=GNDEC_DISCORD_ID))
+async def removeotp(interaction: discord.Interaction, member: discord.Member):
+    """gets the student's information.
+
+    Parameters
+    -----------
+    member: discord.Member
+        the member to get information of.
+    """
+    await interaction.response.send_message(f"getting information of {member.name}", ephemeral=True)
+    info = mydb.getStudent(member.id)
+    if(info):
+        await interaction.followup.send(f"Member {member.name}, {info.roll_number}, {info.name}.", ephemeral=True)
+    else:
+        await interaction.followup.send(f"User is not verified.", ephemeral=True)
 
 
 #------------------- Client events (on member join, on ready, on message etc.)
@@ -55,6 +91,9 @@ async def on_ready():
 @client.event
 async def on_member_join(member):
     # await member.send("Hello, Welcome to GNDEC discord")
+    student = mydb.getStudent(member.id)
+    if student:
+        await addRoleForVerifiedUser(member, student)
     print(member, "Joined")
 
 @client.event
@@ -78,7 +117,7 @@ async def on_message(message):
                     nickName, rollnumber  = re.match(r'([a-zA-Z]+)_(\d+)@gndec\.ac\.in', mail, re.IGNORECASE).groups()
                 else:
                     nickName, rollnumber  = re.match(r'([a-zA-Z]+)(\d+)@gndec\.ac\.in', mail, re.IGNORECASE).groups()
-                guild = client.get_guild(1123068128834899998)
+                guild = client.get_guild(GNDEC_DISCORD_ID)
                 member = guild.get_member(message.author.id)
                 try:
                     year = rollnumber[:2]
@@ -93,7 +132,7 @@ async def on_message(message):
                     else:
                         await member.add_roles(discord.utils.get(guild.roles, id=1142771388504100864)) #default verified role if the above doesnt work
                     try:
-                        await member.edit(nick=nickName)
+                        await member.edit(nick=str(nickName).capitalize())
                     except Exception as e:
                         await sendMessage(GNDEC_DISCORD_ID, GNDEC_LOGS_CHANNEL, f"There was an error while changing nickname of {message.author.name}, user probably has higher role than the bot.\n# --------------------------------------------")
                     await sendMessage(GNDEC_DISCORD_ID, GNDEC_LOGS_CHANNEL, f"user <@{message.author.id}> verified. \nName: {nickName}\nrollnumber:{rollnumber}\ndiscord ID: {message.author.id}\n# --------------------------------------------")
@@ -170,6 +209,19 @@ async def sendEmail(sender_email, receiver_email, subject, message):
         print(f"Error: {e}")
         await sendMessage(GNDEC_DISCORD_ID, GNDEC_LOGS_CHANNEL, f"Failed to send Email: {e}\n# --------------------------------------------")
 
+async def addRoleForVerifiedUser(member, student):
+    guild = client.get_guild(GNDEC_DISCORD_ID)
+    if(str(student.batch) == "20"):
+        await member.add_roles(discord.utils.get(guild.roles,id=ROLE_FOURTH_YEAR))
+    elif(str(student.batch) == "21"):
+        await member.add_roles(discord.utils.get(guild.roles,id=ROLE_THIRD_YEAR))
+    elif(str(student.batch) == "22"):
+        await member.add_roles(discord.utils.get(guild.roles,id=ROLE_SECOND_YEAR))
+    elif(str(student.batch) == "23"):
+        await member.add_roles(discord.utils.get(guild.roles,id=ROLE_FIRST_YEAR))
+    else:
+        await member.add_roles(discord.utils.get(guild.roles, id=1142771388504100864)) #default verified role if the above doesnt work
+    await member.edit(nick=str(student.name).capitalize())
 
 
 #------------------- running the client.

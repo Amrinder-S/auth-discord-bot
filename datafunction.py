@@ -36,12 +36,16 @@ def removeStudent(id):
     if s:
         session.delete(s)
         session.commit()
+        return True
+    else:
+        return False
 
 
 def getStudent(id):
     s = session.query(User).filter_by(id=id).first()
     if s:
         return s
+    return False
 
 
 def getAll():
@@ -62,6 +66,9 @@ def removeOtp(id):
     if s:
         session.delete(s)
         session.commit()
+        return True
+    else:
+        return False
 
 def checkOtp(id, msg):
     s = session.query(Otp).filter_by(id=id).first()
