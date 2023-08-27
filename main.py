@@ -32,10 +32,17 @@ async def syncRolesCommand(interaction):
     await interaction.response.send_message("Syncing.", ephemeral=True)
     await interaction.followup.send(str(await syncRoles()), ephemeral=True)
 
-@tree.command(name = "removeStudent", description = "used to remove a student",guild=discord.Object(id=GNDEC_DISCORD_ID))
+@tree.command(name = "removestudent", description = "used to remove a student",guild=discord.Object(id=GNDEC_DISCORD_ID))
 async def removeStudentCommand(interaction):
     await interaction.response.send_message("Removing.", ephemeral=True)
     await interaction.followup.send(str(await removeStudent()), ephemeral=True)
+
+
+@tree.command(name = "getstudent", description = "used to get details of a student",guild=discord.Object(id=GNDEC_DISCORD_ID))
+async def getStudentCommand(interaction):
+    await interaction.response.send_message("Fetching.", ephemeral=True)
+    await interaction.followup.send(str(await getStudentStudent()), ephemeral=True)
+
 
 #------------------- Client events (on member join, on ready, on message etc.)
 @client.event
