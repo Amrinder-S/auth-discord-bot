@@ -15,6 +15,7 @@ class User(Base):
     batch = Column(Integer)
     roll_number = Column(Integer)
     time_stamp = Column(DateTime)
+
 class Otp(Base):
     __tablename__ = 'otp'
     id = Column(Integer, primary_key = True)
@@ -45,7 +46,9 @@ def getStudent(id):
 
 def getAll():
     all_items = session.query(User).all()
-    return all_items
+    if all_items:
+        return all_items
+    return False
 
 
 def addOtp(id, email, otp):
@@ -83,4 +86,10 @@ def getEmailForOtp(id):
     s = session.query(Otp).filter_by(id=id).first()
     if s:
         return s.email
+    return False
+
+def getAllOtp():
+    all_items = session.query(Otp).all()
+    if all_items:
+        return all_items
     return False
