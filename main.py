@@ -7,6 +7,10 @@ from datetime import datetime
 import datafunction as mydb
 from discord import app_commands
 # todo : you have to check if the person is in the server first before setting roles.
+if os.name == 'nt':
+	os.system('cls')
+else:
+	os.system("clear")
 
 #global variables
 GNDEC_DISCORD_ID = 1123068128834899998
@@ -79,7 +83,7 @@ async def removeotp(interaction: discord.Interaction, member: discord.Member):
 #------------------- Client events (on member join, on ready, on message etc.)
 @client.event
 async def on_ready():
-    await client.change_presence(activity=discord.Game("."))
+#    await client.change_presence(activity=discord.Game("."))
     print("Bot started")
     await   sendMessage(GNDEC_DISCORD_ID, GNDEC_LOGS_CHANNEL, "Bot restarted at " + datetime.now().strftime("%Y-%m-%d %H:%M:%S"))
     await tree.sync(guild=discord.Object(id=GNDEC_DISCORD_ID))
