@@ -84,7 +84,7 @@ async def removeotp(interaction: discord.Interaction, member: discord.Member):
 #------------------- Client events (on member join, on ready, on message etc.)
 @client.event
 async def on_ready():
-    await client.change_presence(activity=discord.Game("."))
+#    await client.change_presence(activity=discord.Game("."))
     print("Bot started")
     await   sendMessage(GNDEC_DISCORD_ID, GNDEC_LOGS_CHANNEL, "Bot restarted at " + datetime.now().strftime("%Y-%m-%d %H:%M:%S"))
     await tree.sync(guild=discord.Object(id=GNDEC_DISCORD_ID))
