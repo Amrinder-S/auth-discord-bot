@@ -8,6 +8,11 @@ import datafunction as mydb
 from discord import app_commands
 # todo : you have to check if the person is in the server first before setting roles.
 
+if os.name == 'nt':
+    os.system("cls")
+else:
+    os.system("clear")
+
 #global variables
 GNDEC_DISCORD_ID = 1123068128834899998
 GNDEC_LOGS_CHANNEL = 1142833474185744465
