@@ -20,7 +20,7 @@ ROLE_FIRST_YEAR = 1123938097957191810
 ROLE_SECOND_YEAR = 1123938146141347860
 ROLE_THIRD_YEAR = 1124275055749251092
 ROLE_FOURTH_YEAR = 1124275287648112700
-mail_pattern = r'^[a-z]+\d+@gndec.ac.in$|^[a-z]+_23\d+@gndec.ac.in$'
+mail_pattern = r"^[a-z]+20\d+@gndec.ac.in$|^[a-z]+21\d+@gndec.ac.in$|^[a-z]+22\d+@gndec.ac.in$|^[a-z]+_23\d+@gndec.ac.in$"
 
 intents = discord.Intents.default()
 intents.members = True
@@ -30,23 +30,22 @@ client = discord.Client(intents=intents)
 tree = app_commands.CommandTree(client)
 def checkEmail(v):
     if not re.fullmatch(mail_pattern, v, re.IGNORECASE):
-        return False
-    else:
         return True
+    else:
+        return False
 @tree.command(name = "getunverified", description = "used to get members who are sent the OTP but have not verified yet..",guild=discord.Object(id=GNDEC_DISCORD_ID))
 async def getUnverified(interaction):
     await interaction.response.send_message("getting unverified users.", ephemeral=False)
+    wrongFormat = "Wrong Format:"
+    unknownReason = "Unknown Reason:"
     unverified_otp = mydb.getAllOtp()
-    if unverified_otp:
-        wrongFormat = ""
-        unknownReason = ""
-        for i in unverified_otp:
-            if(i.email):
-                wrongFormat = f"{wrongFormat}\n<@{i.id}>"
-            else:
-                unknownReason = f"{unknownReason}\n<@{i.id}"
-        await interaction.followup.send(f"### Wrong format\n{wrongFormat}", ephemeral=False)
-        await interaction.followup.send(f"### Unknown reason\n{unknownReason}", ephemeral=False)
+    for i in unverified_otp:
+        if(checkEmail(i.email)):
+            wrongFormat = f"{wrongFormat}\n<@{i.id}>"
+        else:
+            unknownReason = f"{unknownReason}\n<@{i.id}>"
+    await interaction.followup.send(f"### Wrong format\n```{wrongFormat}```", ephemeral=False)
+    await interaction.followup.send(f"### Unknown reason\n```{unknownReason}```", ephemeral=False)
         
 
 @tree.command(name = "syncroles", description = "used to synchronize all roles again.",guild=discord.Object(id=GNDEC_DISCORD_ID))
