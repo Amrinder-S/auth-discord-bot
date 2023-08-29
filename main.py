@@ -41,7 +41,7 @@ async def getUnverified(interaction):
         response = ""
         for i in unverified_otp:
             response = f"{response}\n<@{i.id}> - {checkEmail(i.email)}"
-        await interaction.followup.send(response, ephemeral=True)
+        await interaction.followup.send(response, ephemeral=False)
         
 
 @tree.command(name = "syncroles", description = "used to synchronize all roles again.",guild=discord.Object(id=GNDEC_DISCORD_ID))
