@@ -28,6 +28,22 @@ client = discord.Client(intents=intents)
 
 #------------------- Slash Commands go here.
 tree = app_commands.CommandTree(client)
+def checkEmail(v):
+    if not re.fullmatch(mail_pattern, v, re.IGNORECASE):
+        return "Email was not in proper format."
+    else:
+        return "Unverified for unknown reason."
+@tree.command(name = "getunverified", description = "used to get members who are sent the OTP but have not verified yet..",guild=discord.Object(id=GNDEC_DISCORD_ID))
+async def getUnverified(interaction):
+    await interaction.response.send_message("getting unverified users.", ephemeral=True)
+    unverified_otp = mydb.getAllOtp()
+    if unverified_otp:
+        response = ""
+        for i in unverified_otp:
+            response = f"{response}\n<@{i.id}> - {checkEmail(i.email)}"
+        await interaction.followup.send(response, ephemeral=True)
+        
+
 @tree.command(name = "syncroles", description = "used to synchronize all roles again.",guild=discord.Object(id=GNDEC_DISCORD_ID))
 async def syncRolesCommand(interaction):
     await interaction.response.send_message("Syncing.", ephemeral=True)
@@ -86,7 +102,7 @@ async def removeotp(interaction: discord.Interaction, member: discord.Member):
 async def on_ready():
 #    await client.change_presence(activity=discord.Game("."))
     print("Bot started")
-    await   sendMessage(GNDEC_DISCORD_ID, GNDEC_LOGS_CHANNEL, "Bot restarted at " + datetime.now().strftime("%Y-%m-%d %H:%M:%S"))
+    #await   sendMessage(GNDEC_DISCORD_ID, GNDEC_LOGS_CHANNEL, "Bot restarted at " + datetime.now().strftime("%Y-%m-%d %H:%M:%S"))
     await tree.sync(guild=discord.Object(id=GNDEC_DISCORD_ID))
 
 @client.event
