@@ -30,18 +30,23 @@ client = discord.Client(intents=intents)
 tree = app_commands.CommandTree(client)
 def checkEmail(v):
     if not re.fullmatch(mail_pattern, v, re.IGNORECASE):
-        return "Email: "
+        return False
     else:
-        return "."
+        return True
 @tree.command(name = "getunverified", description = "used to get members who are sent the OTP but have not verified yet..",guild=discord.Object(id=GNDEC_DISCORD_ID))
 async def getUnverified(interaction):
     await interaction.response.send_message("getting unverified users.", ephemeral=False)
     unverified_otp = mydb.getAllOtp()
     if unverified_otp:
-        response = ""
+        wrongFormat = ""
+        unknownReason = ""
         for i in unverified_otp:
-            response = f"{response}\n<@{i.id}> - {checkEmail(i.email)} - {i.email}"
-        await interaction.followup.send(response, ephemeral=False)
+            if(i.email):
+                wrongFormat = f"{wrongFormat}\n<@{i.id}>"
+            else:
+                unknownReason = f"{unknownReason}\n<@{i.id}"
+        await interaction.followup.send(f"### Wrong format\n{wrongFormat}", ephemeral=False)
+        await interaction.followup.send(f"### Unknown reason\n{unknownReason}", ephemeral=False)
         
 
 @tree.command(name = "syncroles", description = "used to synchronize all roles again.",guild=discord.Object(id=GNDEC_DISCORD_ID))
