@@ -19,7 +19,7 @@ ROLE_FIRST_YEAR = 1123938097957191810
 ROLE_SECOND_YEAR = 1123938146141347860
 ROLE_THIRD_YEAR = 1124275055749251092
 ROLE_FOURTH_YEAR = 1124275287648112700
-mail_pattern = r"^\w+(?:_\d+)?@gndec\.ac\.in$"
+mail_pattern = r'^(?!.*abc_abc123@gndec\.ac\.in)(?:[a-zA-Z]+(?:_[0-9]{3}|[0-9]{3})@gndec\.ac\.in)$'
 
 intents = discord.Intents.default()
 intents.members = True
@@ -103,7 +103,7 @@ async def on_message(message):
             msg = message.content
             if '@' in msg:
                 if not re.fullmatch(mail_pattern, msg, re.IGNORECASE):
-                    await message.reply("External email unsupported. Kindly enter your GNDEC email.")
+                    await message.reply("External email unsupported. Kindly enter your GNDEC email.\n If you are in 1st year, your email should be formatted like this: firstname_rollnumber@gndec.ac.in")
                 else:
                     try:
                         await send_otp(msg, message.author.id)
