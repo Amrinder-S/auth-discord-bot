@@ -225,11 +225,11 @@ async def addRoleForVerifiedUser(member, student):
     await member.edit(nick=str(student.name).capitalize())
 #------------------- error handling
 
-@bot.event
+@client.event
 async def on_disconnect():
     print("Disconnected from Discord")
 
-@bot.event
+@client.event
 async def on_error(event, *args, **kwargs):
     # Handle errors here
     pass
