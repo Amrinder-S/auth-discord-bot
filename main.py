@@ -30,9 +30,9 @@ client = discord.Client(intents=intents)
 tree = app_commands.CommandTree(client)
 def checkEmail(v):
     if not re.fullmatch(mail_pattern, v, re.IGNORECASE):
-        return "Email was not in proper format."
+        return "Email: "
     else:
-        return "Unverified for unknown reason."
+        return "."
 @tree.command(name = "getunverified", description = "used to get members who are sent the OTP but have not verified yet..",guild=discord.Object(id=GNDEC_DISCORD_ID))
 async def getUnverified(interaction):
     await interaction.response.send_message("getting unverified users.", ephemeral=False)
