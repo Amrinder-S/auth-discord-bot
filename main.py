@@ -223,6 +223,16 @@ async def addRoleForVerifiedUser(member, student):
     else:
         await member.add_roles(discord.utils.get(guild.roles, id=1142771388504100864)) #default verified role if the above doesnt work
     await member.edit(nick=str(student.name).capitalize())
+#------------------- error handling
+
+@bot.event
+async def on_disconnect():
+    print("Disconnected from Discord")
+
+@bot.event
+async def on_error(event, *args, **kwargs):
+    # Handle errors here
+    pass
 
 
 #------------------- running the client.
