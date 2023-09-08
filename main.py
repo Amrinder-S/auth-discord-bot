@@ -24,7 +24,6 @@ mail_pattern = r"^[a-zA-Z]+20\d+@gndec.ac.in$|^[a-zA-Z]+21\d+@gndec.ac.in$|^[a-z
 normal_mail_pattern = r"^[a-zA-Z]+20\d+@gndec.ac.in$|^[a-zA-Z]+21\d+@gndec.ac.in$|^[a-zA-Z]+22\d+@gndec.ac.in$"
 new_mail_pattern = r"^[a-zA-Z]+_23\d+@gndec.ac.in$"
 alt_mail_pattern = r"^[a-zA-Z]+_[a-zA-Z]+23\d+@gndec.ac.in$"
-global test_mode
 test_mode = False
 intents = discord.Intents.default()
 intents.members = True
@@ -57,8 +56,10 @@ async def syncRolesCommand(interaction):
     await interaction.response.send_message("Syncing.", ephemeral=True)
     await interaction.followup.send(str(await syncRoles()), ephemeral=True)
 
+
 @tree.command(name = "testmode", description = "used to enable or disable test mode.",guild=discord.Object(id=GNDEC_DISCORD_ID))
 async def testmodeCommand(interaction):
+    global test_mode
     test_mode = not test_mode
     await interaction.response.send_message(f"test mode: {test_mode}", ephemeral=True)
 
