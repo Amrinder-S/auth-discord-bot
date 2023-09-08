@@ -20,7 +20,10 @@ ROLE_FIRST_YEAR = 1123938097957191810
 ROLE_SECOND_YEAR = 1123938146141347860
 ROLE_THIRD_YEAR = 1124275055749251092
 ROLE_FOURTH_YEAR = 1124275287648112700
-mail_pattern = r"^[a-z]+20\d+@gndec.ac.in$|^[a-z]+21\d+@gndec.ac.in$|^[a-z]+22\d+@gndec.ac.in$|^[a-z]+_23\d+@gndec.ac.in$|^[a-z]+_[a-z]+23\d+@gndec.ac.in$"
+mail_pattern = r"^[a-zA-Z]+20\d+@gndec.ac.in$|^[a-zA-Z]+21\d+@gndec.ac.in$|^[a-zA-Z]+22\d+@gndec.ac.in$|^[a-zA-Z]+_23\d+@gndec.ac.in$|^[a-zA-Z]+_[a-zA-Z]+23\d+@gndec.ac.in$"
+normal_mail_pattern = r"^[a-zA-Z]+20\d+@gndec.ac.in$|^[a-zA-Z]+21\d+@gndec.ac.in$|^[a-zA-Z]+22\d+@gndec.ac.in$"
+new_mail_pattern = r"^[a-zA-Z]+_23\d+@gndec.ac.in$"
+alt_mail_pattern = r"^[a-zA-Z]+_[a-zA-Z]+23\d+@gndec.ac.in$"
 
 intents = discord.Intents.default()
 intents.members = True
@@ -134,10 +137,15 @@ async def on_message(message):
             
             if msg.startswith("gn1sd") and mydb.checkOtp(message.author.id, msg):
                 mail = mydb.getEmailForOtp(message.author.id)
-                if '_' in mail.lower():
+                if re.fullmatch(new_mail_pattern, mail, re.IGNORECASE):
                     nickName, rollnumber  = re.match(r'([a-zA-Z]+)_(\d+)@gndec\.ac\.in', mail, re.IGNORECASE).groups()
+                elif re.fullmatch(alt_mail_pattern, mail, re.IGNORECASE):
+                    nickName, rollnumber  = re.match(r'([a-zA-Z]+_[a-zA-Z]+)(23\d+)@gndec\.ac\.in', mail, re.IGNORECASE).groups()
+                elif re.fullmatch(normal_mail_pattern, mail, re.IGNORECASE):
+                    nickName, rollnumber = re.match(r"([a-zA-Z]+)(\d+)@gndec.ac.in", mail, re.IGNORECASE).groups()
                 else:
-                    nickName, rollnumber  = re.match(r'([a-zA-Z]+)(\d+)@gndec\.ac\.in', mail, re.IGNORECASE).groups()
+                    nickName = "unknown"
+                    rollnumber = mail
                 guild = client.get_guild(GNDEC_DISCORD_ID)
                 member = guild.get_member(message.author.id)
                 try:
@@ -153,7 +161,8 @@ async def on_message(message):
                     else:
                         await member.add_roles(discord.utils.get(guild.roles, id=1142771388504100864)) #default verified role if the above doesnt work
                     try:
-                        await member.edit(nick=str(nickName).capitalize())
+                        if (nickName != "unknown"):
+                            await member.edit(nick=str(nickName).capitalize())
                     except Exception as e:
                         await sendMessage(GNDEC_DISCORD_ID, GNDEC_LOGS_CHANNEL, f"There was an error while changing nickname of {message.author.name}, user probably has higher role than the bot.\n# --------------------------------------------")
                     await sendMessage(GNDEC_DISCORD_ID, GNDEC_LOGS_CHANNEL, f"user <@{message.author.id}> verified. \nName: {nickName}\nrollnumber:{rollnumber}\ndiscord ID: {message.author.id}\n# --------------------------------------------")
