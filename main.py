@@ -24,7 +24,7 @@ mail_pattern = r"^[a-zA-Z]+20\d+@gndec.ac.in$|^[a-zA-Z]+21\d+@gndec.ac.in$|^[a-z
 normal_mail_pattern = r"^[a-zA-Z]+20\d+@gndec.ac.in$|^[a-zA-Z]+21\d+@gndec.ac.in$|^[a-zA-Z]+22\d+@gndec.ac.in$"
 new_mail_pattern = r"^[a-zA-Z]+_23\d+@gndec.ac.in$"
 alt_mail_pattern = r"^[a-zA-Z]+_[a-zA-Z]+23\d+@gndec.ac.in$"
-
+test_mode = False
 intents = discord.Intents.default()
 intents.members = True
 client = discord.Client(intents=intents)
@@ -55,6 +55,11 @@ async def getUnverified(interaction):
 async def syncRolesCommand(interaction):
     await interaction.response.send_message("Syncing.", ephemeral=True)
     await interaction.followup.send(str(await syncRoles()), ephemeral=True)
+
+@tree.command(name = "testmode", description = "used to enable or disable test mode.",guild=discord.Object(id=GNDEC_DISCORD_ID))
+async def testmodeCommand(interaction):
+    test_mode = not test_mode
+    await interaction.response.send_message(f"test mode: {test_mode}", ephemeral=True)
 
 @tree.command(name = "removestudent", description = "used to remove a student from verifiied status",guild=discord.Object(id=GNDEC_DISCORD_ID))
 async def removeStudentCommand(interaction: discord.Interaction, member: discord.Member):
@@ -188,7 +193,8 @@ async def send_otp(mail, id):
             mydb.addOtp(id, mail, otp)
             await member.send("An OTP has been sent to your GNDEC email. Kindly copy paste it here.")
             await sendMessage(GNDEC_DISCORD_ID, GNDEC_LOGS_CHANNEL, f'user <@{id}> (id: {id}) requesting verification.\n```email: {mail}\notp:{otp}```\n# ONLY GIVE IT IF YOU HAVE MANUALLY VERIFIED THE IDENTITY\n# --------------------------------------------')
-            await sendEmail("aps_phy@gndec.ac.in", mail, "GNDEC Discord Verification OTP", otp) # todo
+            if not test_mode:
+                await sendEmail("aps_phy@gndec.ac.in", mail, "GNDEC Discord Verification OTP", otp)
         else:
             await member.send("Wait atleast 5 minutes for email to arrive.\nOtherwise message a moderator if it doesn't arrive after 5 minutes.")
     else:
