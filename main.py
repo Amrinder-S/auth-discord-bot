@@ -20,7 +20,7 @@ ROLE_FIRST_YEAR = 1123938097957191810
 ROLE_SECOND_YEAR = 1123938146141347860
 ROLE_THIRD_YEAR = 1124275055749251092
 ROLE_FOURTH_YEAR = 1124275287648112700
-mail_pattern = r"^[a-z]+20\d+@gndec.ac.in$|^[a-z]+21\d+@gndec.ac.in$|^[a-z]+22\d+@gndec.ac.in$|^[a-z]+_23\d+@gndec.ac.in$"
+mail_pattern = r"^[a-z]+20\d+@gndec.ac.in$|^[a-z]+21\d+@gndec.ac.in$|^[a-z]+22\d+@gndec.ac.in$|^[a-z]+_23\d+@gndec.ac.in$|^[a-z]+_[a-z]+23\d+@gndec.ac.in$"
 
 intents = discord.Intents.default()
 intents.members = True
@@ -260,7 +260,7 @@ try:
     token = os.environ.get('GNDEC_BOT_TOKEN')
     client.run(token)
 except Exception as e:
-    print(f"enviornment variable not set")
+    print(f"{e}")
 
 
 
