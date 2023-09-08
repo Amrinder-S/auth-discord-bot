@@ -24,7 +24,7 @@ mail_pattern = r"^[a-zA-Z]+20\d+@gndec.ac.in$|^[a-zA-Z]+21\d+@gndec.ac.in$|^[a-z
 normal_mail_pattern = r"^[a-zA-Z]+20\d+@gndec.ac.in$|^[a-zA-Z]+21\d+@gndec.ac.in$|^[a-zA-Z]+22\d+@gndec.ac.in$"
 new_mail_pattern = r"^[a-zA-Z]+_23\d+@gndec.ac.in$"
 alt_mail_pattern = r"^[a-zA-Z]+_[a-zA-Z]+23\d+@gndec.ac.in$"
-test_mode = False
+global test_mode = False
 intents = discord.Intents.default()
 intents.members = True
 client = discord.Client(intents=intents)
