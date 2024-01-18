@@ -1,10 +1,10 @@
-# gndec-discord-bot
+# university-auth-discord-bot
 To set up the discord bot:
 
 - first of all set up the enviornment variables. On windows use setx command.
 ```
 set the SENDGRID_PASSWORD to your sendgrid API key
-set the GNDEC_BOT_TOKEN to the discord bot token.
+set the BOT_TOKEN to the discord bot token.
 example:
 setx SENDGRID_PASSWORD THIS_IS_SENDGRIND_PASSWORD
 ```
